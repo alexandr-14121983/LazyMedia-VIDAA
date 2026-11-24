@@ -58,7 +58,10 @@ $('video').addEventListener('timeupdate',function(){if(!playing)return;var v=thi
 $('playBtn').onclick=startVideo;$('closeDetail').onclick=closeDetail;$('favoriteBtn').onclick=function(){if(!current)return;var n=db.favorites.indexOf(current.id);if(n>=0)db.favorites.splice(n,1);else db.favorites.push(current.id);mark(current,db.history[current.id]?db.history[current.id].seconds:0,!!(db.history[current.id]&&db.history[current.id].watched));save();openDetail(current)};$('watchedBtn').onclick=function(){if(!current)return;mark(current,current.duration||0,true);notice('Отмечено как просмотренное');save();openDetail(current)};
 function navigate(next){page=next;render();if(next==='search')$('query').focus();else{var button=$('grid').querySelector('button');if(button)button.focus()}}document.querySelectorAll('[data-page]').forEach(function(b){b.onclick=function(){navigate(b.dataset.page)}});$('heroBtn').onclick=function(){navigate('search')};$('clearBtn').onclick=function(){if(confirm('Удалить историю и избранное с этого устройства?')){db={favorites:[],history:{}};save();notice('История очищена')}};
 var searchSource='all',searchSerial=0;
-function requestJson(url){return fetch(url).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})}
+function requestJson(url){return Promise.race([
+  fetch(url).then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()}),
+  new Promise(function(_,reject){setTimeout(function(){reject(Error('превышено время ожидания'))},10000)})
+])}
 function showResults(q){
   var serial=++searchSerial;
   navigate('search');$('query').value=q;$('status').textContent='Поиск в источниках…';
